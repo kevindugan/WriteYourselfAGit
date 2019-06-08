@@ -50,3 +50,43 @@ def test_create_repo(tmpdir):
     with open(os.path.join(tmpdir, "myTest", ".git", "config")) as f:
         contents = f.read()
         assert contents.strip() == "[core]\nrepositoryformatversion = 0\nfilemode = false\nbare = false"
+
+def test_repo_comparison(tmpdir):
+    repo1 = GitRepository.GitRepository(os.path.join(tmpdir, "repo1"))
+    repo1.initializeGitDir()
+    repo1_bis = GitRepository.GitRepository(os.path.join(tmpdir, "repo1"))
+
+    # Try to reinitialize repo
+    with pytest.raises(RuntimeError):
+        repo1_bis.initializeGitDir()
+
+    # Should show equality
+    assert repo1 == repo1_bis
+
+    repo2 = GitRepository.GitRepository(os.path.join(tmpdir, "repo2"))
+    assert not repo1 == repo2
+
+def test_find_repo(tmpdir):
+    repo = GitRepository.GitRepository(os.path.join(tmpdir, "myTest"))
+    repo.initializeGitDir()
+
+    # Create subdirs
+    os.makedirs(os.path.join(tmpdir, "myTest", "dir1", "dir11", "dir13"))
+
+    # Test outside git repo
+    with pytest.raises(SystemExit):
+        GitRepository.GitRepository.find_repo(tmpdir)
+
+    # Test in root dir
+    result = GitRepository.GitRepository.find_repo(os.path.join(tmpdir, "myTest"))
+    assert result == repo
+
+    # Test in subdir
+    result = GitRepository.GitRepository.find_repo(os.path.join(tmpdir, "myTest", "dir1", "dir11", "dir13"))
+    assert result == repo
+
+    # Test cwd
+    os.chdir(os.path.join(tmpdir, "myTest", "dir1", "dir11", "dir13"))
+    assert os.getcwd() == os.path.join(tmpdir, "myTest", "dir1", "dir11", "dir13")
+    result = GitRepository.GitRepository.find_repo(os.getcwd())
+    assert result == repo
