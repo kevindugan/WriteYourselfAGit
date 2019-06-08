@@ -1,5 +1,5 @@
 import argparse
-import sys
+import sys, os
 from VersionControl import GitRepository
 from VersionControl import GitObject
 
@@ -20,6 +20,9 @@ class wyag(object):
         hash_obj_parser.add_argument('path', help='Path to file')
         hash_obj_parser.add_argument('-w', help='Actually write object file', dest='write_obj', action='store_true')
 
+        cat_file_parser = subparsers.add_parser('cat-file', help='Output contents of object')
+        cat_file_parser.add_argument('hash', help='Hash of object')
+
         if arg_list is not None and len(arg_list) < 1:
             parser.print_help()
             sys.exit(1)
@@ -39,3 +42,7 @@ class wyag(object):
             repo = GitRepository.GitRepository.find_repo(cli_args['path'])
             obj = GitObject.GitObject(repo)
             print(obj.create_object(cli_args['path'], cli_args['write_obj']))
+        elif cli_args["command"] == "cat-file":
+            repo = GitRepository.GitRepository.find_repo(os.getcwd())
+            obj = GitObject.GitObject(repo)
+            print(obj.read_object(cli_args['hash']), end='')
