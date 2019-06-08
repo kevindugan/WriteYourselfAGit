@@ -1,7 +1,7 @@
 import os, sys
 import configparser
 
-class GitRepository():
+class GitRepository(object):
 
     def __init__(self, path):
         self.workTree = os.path.abspath(path)

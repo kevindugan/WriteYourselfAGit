@@ -2,7 +2,7 @@ import argparse
 import sys
 from VersionControl import GitRepository
 
-class wyag():
+class wyag(object):
 
     def __init__(self):
         pass
