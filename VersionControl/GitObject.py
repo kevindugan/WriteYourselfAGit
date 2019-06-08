@@ -9,7 +9,7 @@ class GitObject(object):
 
     def create_object(self, path, actually_write=False):
         if not os.path.isabs(path):
-            raise RuntimeError("Expected Absolute Path")
+            path = os.path.abspath(path)
 
         contents = ""
         with open(path) as f:
