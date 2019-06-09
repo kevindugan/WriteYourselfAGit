@@ -53,17 +53,19 @@ def test_parse_commit_object():
                "Extra long commit message for testing purposes..\n" + \
                "This should show as much longer in logs"
 
-    results = GitObject.GitObject.parse_commit_object(contents)
+    result = GitObject.GitObject.parse_commit_object(contents)
 
-    assert "tree" in results
-    assert results["tree"] == '7a2808c8a1d6b89d2072260593fe6341b6be0519'
-    assert "parent" in results
-    assert results["parent"] == 'e0b862c7f277a48b69d41609f30cd3f263821e00'
-    assert "short_msg" in results
-    assert results["short_msg"] == 'Adding output of blob object'
-    assert "long_msg" in results
-    assert results["long_msg"] == 'Extra long commit message for testing purposes..\nThis should show as much longer in logs'
+    assert "tree" in result
+    assert result["tree"] == '7a2808c8a1d6b89d2072260593fe6341b6be0519'
+    assert "parent" in result
+    assert result["parent"] == 'e0b862c7f277a48b69d41609f30cd3f263821e00'
+    assert "short_msg" in result
+    assert result["short_msg"] == 'Adding output of blob object'
+    assert "long_msg" in result
+    assert result["long_msg"] == 'Extra long commit message for testing purposes..\nThis should show as much longer in logs'
 
+    serial_result = GitObject.GitObject.serialize_commit_object(result)
+    assert serial_result == contents
 
     # More complicated commit
     contents = "tree 025b46d991b8602e229fa477dbc50a98ee050dcf\n" + \
@@ -87,16 +89,16 @@ def test_parse_commit_object():
                "\n" + \
                "Adding ci script"
 
-    results = GitObject.GitObject.parse_commit_object(contents)
+    result = GitObject.GitObject.parse_commit_object(contents)
 
-    assert "tree" in results
-    assert results["tree"] == "025b46d991b8602e229fa477dbc50a98ee050dcf"
-    assert "parent" in results
-    assert len(results["parent"]) == 2
-    for p,expt in zip (results["parent"], ["a33e731eb4d600b08dcd34fea6fe45cecc7958a0", "f4f16ee537a618502fac0f6a0db822ddd3b45b12"]):
+    assert "tree" in result
+    assert result["tree"] == "025b46d991b8602e229fa477dbc50a98ee050dcf"
+    assert "parent" in result
+    assert len(result["parent"]) == 2
+    for p,expt in zip (result["parent"], ["a33e731eb4d600b08dcd34fea6fe45cecc7958a0", "f4f16ee537a618502fac0f6a0db822ddd3b45b12"]):
         assert p == expt
-    assert "gpgsig" in results
-    assert results["gpgsig"] == "-----BEGIN PGP SIGNATURE-----\n" + \
+    assert "gpgsig" in result
+    assert result["gpgsig"] == "-----BEGIN PGP SIGNATURE-----\n" + \
                                 "\n" + \
                                 "wsBcBAABCAAQBQJc/Ac+CRBK7hj4Ov3rIwAAdHIIAJVYNA8ZCS8Gl/ckHB+SSwIt\n" + \
                                 "Uu78eWzEcR/kg229iBJWhUix0M3q0ku40aMwB5YjxVvRWNUE9OYiXqqYMvRHWopO\n" + \
@@ -108,10 +110,11 @@ def test_parse_commit_object():
                                 "-----END PGP SIGNATURE-----\n"
 
 
-    assert "short_msg" in results
-    assert results["short_msg"] == "Merge pull request #1 from kevindugan/travis-ci"
-    assert "long_msg" in results
-    assert results["long_msg"] == "Adding ci script"
+    assert "short_msg" in result
+    assert result["short_msg"] == "Merge pull request #1 from kevindugan/travis-ci"
+    assert "long_msg" in result
+    assert result["long_msg"] == "Adding ci script"
 
-
+    serial_result = GitObject.GitObject.serialize_commit_object(result)
+    assert serial_result == contents
 

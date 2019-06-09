@@ -114,3 +114,26 @@ class GitObject(object):
                     result["long_msg"] += '\n' + item.strip()
 
         return result
+
+    @staticmethod
+    def serialize_commit_object(data):
+
+        result = ""
+
+        for key, value in data.items():
+
+            if key == "short_msg" or key == "long_msg":
+                continue
+
+            if type(value) != list:
+                value = [ value ]
+
+            for v in value:
+                result += key + " " + v.replace("\n", "\n ") + "\n"
+
+        if "short_msg" in data:
+            result += "\n" + data["short_msg"]
+        if "long_msg" in data:
+            result += "\n\n" + data["long_msg"]
+
+        return result
