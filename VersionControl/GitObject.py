@@ -120,6 +120,9 @@ class GitObject(object):
                 else:
                     result["long_msg"] += '\n' + item.strip()
 
+        # last_key = next(reversed(result))
+        # result[last_key] += '\n'
+
         return result
 
     @staticmethod
@@ -139,8 +142,10 @@ class GitObject(object):
                 result += key + " " + v.replace("\n", "\n ") + "\n"
 
         if "short_msg" in data:
-            result += "\n" + data["short_msg"]
+            result += "\n" + data["short_msg"] + '\n'
         if "long_msg" in data:
-            result += "\n\n" + data["long_msg"]
+            result += "\n" + data["long_msg"]
+
+        # result += '\n'
 
         return result

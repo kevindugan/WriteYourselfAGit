@@ -35,24 +35,23 @@ def test_read_blob_object(tmpdir):
 def test_parse_commit_object():
 
     # Standard Commit
-    contents = get_simple_commit_data()
+    contents, expected_hash = get_simple_commit_data()
 
     result = GitObject.GitObject.parse_commit_object(contents)
 
     assert "tree" in result
-    assert result["tree"] == '7a2808c8a1d6b89d2072260593fe6341b6be0519'
+    assert result["tree"] == 'aa2fd36eabc0cdb0c629c3d164d81dc31c2aa8fb'
     assert "parent" in result
-    assert result["parent"] == 'e0b862c7f277a48b69d41609f30cd3f263821e00'
+    assert result["parent"] == '6d2f5894d033a5c19cd8d3a41ab1626ab272ed51'
     assert "short_msg" in result
-    assert result["short_msg"] == 'Adding output of blob object'
-    assert "long_msg" in result
-    assert result["long_msg"] == 'Extra long commit message for testing purposes..\nThis should show as much longer in logs'
+    assert result["short_msg"] == 'Adding readme'
+    assert "long_msg" not in result
 
     serial_result = GitObject.GitObject.serialize_commit_object(result)
     assert serial_result == contents
 
     # More complicated commit
-    contents = get_complex_commit_data()
+    contents, expected_hash = get_complex_commit_data()
 
     result = GitObject.GitObject.parse_commit_object(contents)
 
@@ -87,8 +86,7 @@ def test_create_commit_object(tmpdir):
     repo = GitRepository.GitRepository(os.path.join(tmpdir, "myTest"))
     repo.initializeGitDir()
 
-    contents = get_complex_commit_data()
-    expected_hash = '0b2076b2607785d7aa94eb7fd63689f679967c04'
+    contents, expected_hash = get_complex_commit_data()
 
     obj = CommitObject.CommitObject(repo, contents)
     sha = obj.create_object(False)
@@ -103,8 +101,7 @@ def test_read_commit_object(tmpdir):
     repo.initializeGitDir()
 
     # Create File
-    contents = get_complex_commit_data()
-    expected_hash = '0b2076b2607785d7aa94eb7fd63689f679967c04'
+    contents, expected_hash = get_complex_commit_data()
 
     obj = CommitObject.CommitObject(repo, contents)
     sha = obj.create_object(True)
@@ -112,25 +109,32 @@ def test_read_commit_object(tmpdir):
     result = obj.read_object(sha).serializeData()
     assert result == contents
     
+def test_log(tmpdir):
+    repo = GitRepository.GitRepository(os.path.join(tmpdir, "myTest"))
+    repo.initializeGitDir()
+
+    historyData = git_commit_history_data()
+    for commit in historyData:
+        # filePath = os.path.join(tmpdir, "myTest", ".git", "objects", commit[1][0:2], commit[1][2:])
+        # os.makedirs(os.path.dirname(filePath))
+        print(repo.gitDir)
+        obj = CommitObject.CommitObject(repo, commit[0])
+        sha = obj.create_object(True)
+        assert sha == commit[1]
 
 
-def test_log():
-    pass
 
 
 ###############################################################################
 # Data Setup
 ###############################################################################
 def get_simple_commit_data():
-    return "tree 7a2808c8a1d6b89d2072260593fe6341b6be0519\n" + \
-           "parent e0b862c7f277a48b69d41609f30cd3f263821e00\n" + \
-           "author Kevin J. Dugan <dugankj@ornl.gov> 1560037321 -0400\n" + \
-           "committer Kevin J. Dugan <dugankj@ornl.gov> 1560040021 -0400\n" + \
+    return "tree aa2fd36eabc0cdb0c629c3d164d81dc31c2aa8fb\n" + \
+           "parent 6d2f5894d033a5c19cd8d3a41ab1626ab272ed51\n" + \
+           "author Kevin J. Dugan <dugankj@ornl.gov> 1559970810 -0400\n" + \
+           "committer Kevin J. Dugan <dugankj@ornl.gov> 1559970810 -0400\n" + \
            "\n" + \
-           "Adding output of blob object\n" + \
-           "\n" + \
-           "Extra long commit message for testing purposes..\n" + \
-           "This should show as much longer in logs"
+           "Adding readme\n", "a62df6acda73871958f89e0346c97284d1a14f23"
 
 def get_complex_commit_data():
     return "tree 025b46d991b8602e229fa477dbc50a98ee050dcf\n" + \
@@ -152,4 +156,64 @@ def get_complex_commit_data():
            "\n" + \
             "Merge pull request #1 from kevindugan/travis-ci\n" + \
            "\n" + \
-           "Adding ci script"
+           "Adding ci script", "0b2076b2607785d7aa94eb7fd63689f679967c04"
+
+def git_commit_history_data():
+    history = []
+    history.append(["tree aff72e7367c3ae1928decc25272ec334a805e618\n" + \
+                   "author Kevin J. Dugan <dugankj@ornl.gov> 1560083980 -0400\n" + \
+                   "committer Kevin J. Dugan <dugankj@ornl.gov> 1560083980 -0400\n" + \
+                   "\n" + \
+                   "Initial Commit\n", "d228dfd0601080af1af564eb7a3bc6fbb7a2696f"])
+
+
+    history.append(["tree 18e156c8acb2081a9b300796b8672f27837e3961\n" + \
+                   "parent d228dfd0601080af1af564eb7a3bc6fbb7a2696f\n" + \
+                   "author Kevin J. Dugan <dugankj@ornl.gov> 1560084040 -0400\n" + \
+                   "committer Kevin J. Dugan <dugankj@ornl.gov> 1560084040 -0400\n" + \
+                   "\n" + \
+                   "Added new line\n", "30f3cf9a5f3b33b6090f469c6f8fd8ced8aad098"])
+
+
+    history.append(["tree 4fdedfd76570511fb0e43153b8cfe2aba896b009\n" + \
+                   "parent 30f3cf9a5f3b33b6090f469c6f8fd8ced8aad098\n" + \
+                   "author Kevin J. Dugan <dugankj@ornl.gov> 1560084362 -0400\n" + \
+                   "committer Kevin J. Dugan <dugankj@ornl.gov> 1560084362 -0400\n" + \
+                   "\n" + \
+                   "Added new lines\n", "bbfbe5740cb7180100e86504779d38173d2247cb"])
+
+
+    history.append(["tree 24cc7c0ead06780c12ae9ae79fc7fb69c0f054ee\n" + \
+                   "parent 30f3cf9a5f3b33b6090f469c6f8fd8ced8aad098\n" + \
+                   "author Kevin J. Dugan <dugankj@ornl.gov> 1560084096 -0400\n" + \
+                   "committer Kevin J. Dugan <dugankj@ornl.gov> 1560084096 -0400\n" + \
+                   "\n" + \
+                   "Added new file\n", "6ed18ac3b2d77272bf240f313901ef75076d6377"])
+
+                   
+    history.append(["tree c8cd9c7e731de0feb53cd0f0a60ebe39d30ebfd8\n" + \
+                   "parent 6ed18ac3b2d77272bf240f313901ef75076d6377\n" + \
+                   "author Kevin J. Dugan <dugankj@ornl.gov> 1560084124 -0400\n" + \
+                   "committer Kevin J. Dugan <dugankj@ornl.gov> 1560084124 -0400\n" + \
+                   "\n" + \
+                   "Added new line\n", "17c06afad13f728e4e31ae85a534a5cf73e2bd76"])
+
+
+    history.append(["tree 24cb97583ae8ef3e046c8e7f8d78aea8a0986e20\n" + \
+                   "parent bbfbe5740cb7180100e86504779d38173d2247cb\n" + \
+                   "parent 17c06afad13f728e4e31ae85a534a5cf73e2bd76\n" + \
+                   "author Kevin J. Dugan <dugankj@ornl.gov> 1560084417 -0400\n" + \
+                   "committer Kevin J. Dugan <dugankj@ornl.gov> 1560084417 -0400\n" + \
+                   "\n" + \
+                   "Merge branch 'new-file'\n", "af54843b4fa85db56ed9140b5a39ec2df744fc4b"])
+
+
+    history.append(["tree 0fef7a0dc4cd421c3645c21f878b76205f78c3b1\n" + \
+                   "parent af54843b4fa85db56ed9140b5a39ec2df744fc4b\n" + \
+                   "author Kevin J. Dugan <dugankj@ornl.gov> 1560084474 -0400\n" + \
+                   "committer Kevin J. Dugan <dugankj@ornl.gov> 1560084474 -0400\n" + \
+                   "\n" + \
+                   "added new lines\n", "075c7e021c0d2e4a43f01a2e848daf605ed4e65f"])
+
+
+    return history
