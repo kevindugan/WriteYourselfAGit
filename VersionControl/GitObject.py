@@ -1,6 +1,8 @@
 import os
 import hashlib
 import zlib
+import re
+import collections
 
 class GitObject(object):
 
@@ -50,3 +52,65 @@ class GitObject(object):
             assert obj_format == 'blob'
 
         return contents
+
+    @staticmethod
+    def parse_commit_object(data):
+        # Commit object consists of two parts. The first part is a key value pair list
+        # where keys and values are separated by a space. The key starts at the line begining
+        # until the first space. The value is all that remains. Values can continue after line
+        # ends where a space will start the next line.
+        # The second part consists of a short commit message and an optional long commit message
+
+        # Split the lines of data if the character following the newline is not a space
+        # Keep the split string because it will contain the first character of a key
+        SD = re.split("(\n[^ ])", data)
+
+        # Add the first character of the key back to that key value pair
+        splitData = [""]
+        for item in SD:
+            if item[0] != '\n':
+                splitData[-1] += item
+            else:
+                splitData.append(item[1:])
+
+        # Add all key value pairs along with long and short messages to an ordered
+        # dictionary
+        result = collections.OrderedDict()
+        key_values_done = False
+        for item in splitData:
+
+            # The commit messages start after a blank line. This shows up as the first
+            # character being a new line
+            if item[0] == '\n':
+                key_values_done = True
+
+            if not key_values_done:
+                # Split the key value pair by the key and the remaining
+                split_item = item.split(" ", 1)
+                key = split_item[0]
+                value = split_item[1]
+
+                # Take care of line continuation
+                value = value.replace("\n ", "\n")
+
+                # Don't overwrite data in the dictionary. Append it
+                if key in result:
+                    if type(result[key]) == list:
+                        result[key].append(value)
+                    else:
+                        result[key] = [ result[key], value ]
+                else:
+                    result[key] = value
+            else:
+                # Add short message and keep going
+                if "short_msg" not in result:
+                    result["short_msg"] = item.strip()
+                    continue
+
+                # Add all remaining lines as long message
+                if "long_msg" not in result:
+                    result["long_msg"] = item.strip()
+                else:
+                    result["long_msg"] += '\n' + item.strip()
+
+        return result
