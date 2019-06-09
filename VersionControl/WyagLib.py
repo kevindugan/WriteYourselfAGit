@@ -1,7 +1,7 @@
 import argparse
 import sys, os
 from VersionControl import GitRepository
-from VersionControl import GitObject
+from VersionControl import GitObjectFactory
 
 class wyag(object):
 
@@ -19,9 +19,11 @@ class wyag(object):
         hash_obj_parser = subparsers.add_parser('hash-object', help='Hash file into object type')
         hash_obj_parser.add_argument('path', help='Path to file')
         hash_obj_parser.add_argument('-w', help='Actually write object file', dest='write_obj', action='store_true')
+        hash_obj_parser.add_argument('-t', help='Type of Object', dest='object_type', choices=['blob'], default='blob')
 
         cat_file_parser = subparsers.add_parser('cat-file', help='Output contents of object')
         cat_file_parser.add_argument('hash', help='Hash of object')
+        cat_file_parser.add_argument('-t', help="Type of Object", dest="object_type", choices=['blob'], default='blob')
 
         if arg_list is not None and len(arg_list) < 1:
             parser.print_help()
@@ -38,11 +40,16 @@ class wyag(object):
         if cli_args["command"] == "init":
             repo = GitRepository.GitRepository(cli_args['path'])
             repo.initializeGitDir()
+
         elif cli_args["command"] == "hash-object":
             repo = GitRepository.GitRepository.find_repo(cli_args['path'])
-            obj = GitObject.GitObject(repo)
-            print(obj.create_object(cli_args['path'], cli_args['write_obj']))
+            fileContents = ""
+            with open(cli_args['path']) as f:
+                fileContents = f.read()
+            obj = GitObjectFactory.GitObjectFactory.factory(cli_args["object_type"], repo, fileContents)
+            print(obj.create_object(cli_args['write_obj']))
+
         elif cli_args["command"] == "cat-file":
             repo = GitRepository.GitRepository.find_repo(os.getcwd())
-            obj = GitObject.GitObject(repo)
-            print(obj.read_object(cli_args['hash']), end='')
+            obj = GitObjectFactory.GitObjectFactory.factory(cli_args["object_type"], repo)
+            print(obj.read_object(cli_args['hash']).serializeData(), end='')

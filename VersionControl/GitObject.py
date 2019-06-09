@@ -3,21 +3,28 @@ import hashlib
 import zlib
 import re
 import collections
+from VersionControl import GitObjectFactory
 
 class GitObject(object):
 
-    def __init__(self, repo):
+    def __init__(self, repo, data=None):
         self.repository = repo
+        if data is not None:
+            self.deserializeData(data)
+    
+    def getObjectType(self):
+        raise NotImplementedError()
 
-    def create_object(self, path, actually_write=False):
-        if not os.path.isabs(path):
-            path = os.path.abspath(path)
+    def serializeData(self):
+        raise NotImplementedError()
 
-        contents = ""
-        with open(path) as f:
-            contents = f.read()
+    def deserializeData(self, path):
+        raise NotImplementedError()
 
-        header = "blob " + str(len(contents)) + '\0'
+    def create_object(self, actually_write=False):
+
+        contents = self.serializeData()
+        header = self.getObjectType() + " " + str(len(contents)) + '\0'
         storage = (header + contents).encode()
 
         sha = hashlib.sha1(storage).hexdigest()
@@ -35,6 +42,7 @@ class GitObject(object):
         repoFilePath = os.path.join(self.repository.gitDir, "objects", sha_hash[0:2], sha_hash[2:])
 
         contents = ""
+
         with open(repoFilePath, "rb") as f:
             raw = zlib.decompress(f.read())
 
@@ -51,7 +59,7 @@ class GitObject(object):
 
             assert obj_format == 'blob'
 
-        return contents
+        return GitObjectFactory.GitObjectFactory.factory(obj_format, self.repository, contents)
 
     @staticmethod
     def parse_commit_object(data):
