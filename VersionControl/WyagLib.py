@@ -19,11 +19,11 @@ class wyag(object):
         hash_obj_parser = subparsers.add_parser('hash-object', help='Hash file into object type')
         hash_obj_parser.add_argument('path', help='Path to file')
         hash_obj_parser.add_argument('-w', help='Actually write object file', dest='write_obj', action='store_true')
-        hash_obj_parser.add_argument('-t', help='Type of Object', dest='object_type', choices=['blob'], default='blob')
+        hash_obj_parser.add_argument('-t', help='Type of Object', dest='object_type', choices=['blob', 'commit'], default='blob')
 
         cat_file_parser = subparsers.add_parser('cat-file', help='Output contents of object')
         cat_file_parser.add_argument('hash', help='Hash of object')
-        cat_file_parser.add_argument('-t', help="Type of Object", dest="object_type", choices=['blob'], default='blob')
+        cat_file_parser.add_argument('-t', help="Type of Object", dest="object_type", choices=['blob', 'commit'], default='blob')
 
         if arg_list is not None and len(arg_list) < 1:
             parser.print_help()

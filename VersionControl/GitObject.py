@@ -48,6 +48,7 @@ class GitObject(object):
 
             x = raw.find(b' ')
             obj_format = raw[0:x].decode('ascii')
+            assert obj_format in ['blob', 'commit']
 
             y = raw.find(b'\x00', x)
             obj_size = int(raw[x:y].decode('ascii'))
@@ -56,8 +57,6 @@ class GitObject(object):
 
             if len(contents) != obj_size:
                 raise RuntimeError("Malformed Object {0}: bad length".format(sha_hash))
-
-            assert obj_format == 'blob'
 
         return GitObjectFactory.GitObjectFactory.factory(obj_format, self.repository, contents)
 

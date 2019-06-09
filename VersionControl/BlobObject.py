@@ -1,5 +1,4 @@
 from VersionControl.GitObject import GitObject
-import os
 
 class BlobObject(GitObject):
     
