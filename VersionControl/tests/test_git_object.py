@@ -108,21 +108,92 @@ def test_read_commit_object(tmpdir):
 
     result = obj.read_object(sha).serializeData()
     assert result == contents
-    
+
+def test_commit_queue():
+
+    queue = GitObject.CommitQueue()
+    assert queue.size() == 0
+    assert queue.empty()
+
+    queue.add("first")
+    queue.add("second")
+    queue.add("third")
+    queue.add("fourth")
+    queue.add("fifth")
+    queue.add("sixth")
+    assert queue.size() == 6
+
+    assert queue.pop() == "first"
+    assert queue.top() == "second"
+
+    assert "second" in queue
+    assert "fifth" in queue
+    assert not "first" in queue
+
+    with pytest.raises(AssertionError):
+        queue.pop_until("feet")
+
+    queue.pop_until("fourth")
+    assert queue.top() == "fourth"
+
+def test_fill_commit_queue(tmpdir):
+    repo = GitRepository.GitRepository(os.path.join(tmpdir, "myTest"))
+    repo.initializeGitDir()
+
+    historyData = git_commit_history_data()
+    for commit in historyData:
+        obj = CommitObject.CommitObject(repo, commit[0])
+        sha = obj.create_object(True)
+        assert sha == commit[1]
+
+    queue = GitObject.CommitQueue()
+    obj = CommitObject.CommitObject(repo)
+    obj.fillCommitQueue(historyData[-1][1], queue)
+    assert queue.size() == 5
+    assert queue.top() == historyData[-1][1]
+
+def test_base_commit(tmpdir):
+    repo = GitRepository.GitRepository(os.path.join(tmpdir, "myTest"))
+    repo.initializeGitDir()
+
+    historyData = git_commit_history_data()
+    for commit in historyData:
+        obj = CommitObject.CommitObject(repo, commit[0])
+        sha = obj.create_object(True)
+        assert sha == commit[1]
+
+    sha1 = historyData[3][1]
+    sha2 = historyData[4][1]
+    base = historyData[1][1]
+
+    obj = GitObject.GitObject(repo)
+    result = obj.getLowestCommonAncestor(commits=[sha1, sha2])
+    assert result == base
+
+
 def test_log(tmpdir):
     repo = GitRepository.GitRepository(os.path.join(tmpdir, "myTest"))
     repo.initializeGitDir()
 
     historyData = git_commit_history_data()
     for commit in historyData:
-        # filePath = os.path.join(tmpdir, "myTest", ".git", "objects", commit[1][0:2], commit[1][2:])
-        # os.makedirs(os.path.dirname(filePath))
-        print(repo.gitDir)
         obj = CommitObject.CommitObject(repo, commit[0])
         sha = obj.create_object(True)
         assert sha == commit[1]
 
+    head = historyData[-1][1]
+    # print(head)
 
+    obj = CommitObject.CommitObject(repo)
+    shaList = obj.getLog(head)
+    print("\nLog")
+    for result, expected in zip(shaList, reversed(historyData)):
+        print("Result: "+result+"  Expected: "+expected[1])
+
+    # assert len(shaList) == len(historyData)
+    # for result, expected in zip(shaList,reversed(historyData)):
+    #     assert result == expected[1]
+    
 
 
 ###############################################################################
@@ -175,14 +246,6 @@ def git_commit_history_data():
                    "Added new line\n", "30f3cf9a5f3b33b6090f469c6f8fd8ced8aad098"])
 
 
-    history.append(["tree 4fdedfd76570511fb0e43153b8cfe2aba896b009\n" + \
-                   "parent 30f3cf9a5f3b33b6090f469c6f8fd8ced8aad098\n" + \
-                   "author Kevin J. Dugan <dugankj@ornl.gov> 1560084362 -0400\n" + \
-                   "committer Kevin J. Dugan <dugankj@ornl.gov> 1560084362 -0400\n" + \
-                   "\n" + \
-                   "Added new lines\n", "bbfbe5740cb7180100e86504779d38173d2247cb"])
-
-
     history.append(["tree 24cc7c0ead06780c12ae9ae79fc7fb69c0f054ee\n" + \
                    "parent 30f3cf9a5f3b33b6090f469c6f8fd8ced8aad098\n" + \
                    "author Kevin J. Dugan <dugankj@ornl.gov> 1560084096 -0400\n" + \
@@ -197,6 +260,14 @@ def git_commit_history_data():
                    "committer Kevin J. Dugan <dugankj@ornl.gov> 1560084124 -0400\n" + \
                    "\n" + \
                    "Added new line\n", "17c06afad13f728e4e31ae85a534a5cf73e2bd76"])
+
+
+    history.append(["tree 4fdedfd76570511fb0e43153b8cfe2aba896b009\n" + \
+                   "parent 30f3cf9a5f3b33b6090f469c6f8fd8ced8aad098\n" + \
+                   "author Kevin J. Dugan <dugankj@ornl.gov> 1560084362 -0400\n" + \
+                   "committer Kevin J. Dugan <dugankj@ornl.gov> 1560084362 -0400\n" + \
+                   "\n" + \
+                   "Added new lines\n", "bbfbe5740cb7180100e86504779d38173d2247cb"])
 
 
     history.append(["tree 24cb97583ae8ef3e046c8e7f8d78aea8a0986e20\n" + \

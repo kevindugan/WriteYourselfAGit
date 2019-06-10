@@ -117,29 +117,3 @@ def test_set_head(tmpdir):
         assert sha == f.read().strip()
 
     assert repo.getHeadCommit() == sha
-
-def test_commit_queue():
-
-    queue = GitRepository.CommitQueue()
-    assert queue.size() == 0
-
-    queue.add("first")
-    queue.add("second")
-    queue.add("third")
-    queue.add("fourth")
-    queue.add("fifth")
-    queue.add("sixth")
-    assert queue.size() == 6
-
-    assert queue.pop() == "first"
-    assert queue.top() == "second"
-
-    assert "second" in queue
-    assert "fifth" in queue
-    assert not "first" in queue
-
-    with pytest.raises(AssertionError):
-        queue.pop_until("feet")
-
-    queue.pop_until("fourth")
-    assert queue.top() == "fourth"

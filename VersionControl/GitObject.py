@@ -149,3 +149,95 @@ class GitObject(object):
         # result += '\n'
 
         return result
+
+    def fillCommitQueue(self, sha, queue):
+        queue.add(sha)
+
+        contents = self.read_object(sha)
+        assert contents.getObjectType() == "commit"
+        if "parent" not in contents.commitData.keys():
+            return
+            
+        parent = ""
+        if type(contents.commitData["parent"]) == list:
+            parent = contents.commitData["parent"][0]
+        else:
+            parent = contents.commitData["parent"]
+
+        self.fillCommitQueue(parent, queue)
+
+    def getLowestCommonAncestor(self, commits):
+        assert len(commits) > 0
+
+        queue = CommitQueue()
+        self.fillCommitQueue(commits[0], queue)
+        assert queue.size() > 0
+
+        for other in commits[1:]:
+            otherQueue = CommitQueue()
+            self.fillCommitQueue(other, otherQueue)
+            while(not otherQueue.empty()):
+                if otherQueue.top() in queue:
+                    break
+                else:
+                    otherQueue.pop()
+
+            queue = otherQueue
+
+        return queue.top()
+
+    def getLog(self, sha, result=[]):
+
+        if sha in result:
+            return result
+        result.append(sha)
+
+        contents = self.read_object(sha)
+        assert contents.getObjectType() == "commit"
+
+        if "parent" not in contents.commitData.keys():
+            return result
+
+        parents = contents.commitData["parent"]
+        if type(parents) != list:
+            parents = [ parents ]
+        
+        for p in parents:
+            print ("Commit: " + sha)
+            result = self.getLog(p, result)
+
+        return result
+
+
+
+
+class CommitQueue(object):
+
+    def __init__(self):
+        self.queue = []
+
+    def size(self):
+        return len(self.queue)
+
+    def empty(self):
+        return len(self.queue) == 0
+
+    def add(self, item):
+        self.queue.append(item)
+
+    def pop(self):
+        return self.queue.pop(0)
+
+    def top(self):
+        return self.queue[0]
+
+    def pop_until(self, item):
+        assert item in self.queue, "Item not in queue"
+        while (len(self.queue) > 0):
+            if self.top() == item:
+                return
+            else:
+                self.pop()
+
+    def __contains__(self, item):
+        return item in self.queue

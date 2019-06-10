@@ -75,11 +75,6 @@ class GitRepository(object):
 
         return sha
 
-    def getLowestCommonAncestor(self, commits, commit_stack=[]):
-        assert len(commits) > 0
-
-
-
     @staticmethod
     def find_repo(path):
         path = os.path.abspath(path)
@@ -95,31 +90,3 @@ class GitRepository(object):
             sys.exit(1)
 
         return GitRepository.find_repo(parent)
-
-class CommitQueue(object):
-
-    def __init__(self):
-        self.queue = []
-
-    def size(self):
-        return len(self.queue)
-
-    def add(self, item):
-        self.queue.append(item)
-
-    def pop(self):
-        return self.queue.pop(0)
-
-    def top(self):
-        return self.queue[0]
-
-    def pop_until(self, item):
-        assert item in self.queue, "Item not in queue"
-        while (len(self.queue) > 0):
-            if self.top() == item:
-                return
-            else:
-                self.pop()
-
-    def __contains__(self, item):
-        return item in self.queue
