@@ -186,7 +186,7 @@ class GitObject(object):
 
         return queue.top()
 
-    def getLog(self, sha, result=[]):
+    def getLog(self, sha, result=[], LCA=None):
 
         if sha in result:
             return result
@@ -202,9 +202,17 @@ class GitObject(object):
         if type(parents) != list:
             parents = [ parents ]
         
+        if len(parents) > 1:
+            LCA = self.getLowestCommonAncestor(parents)
+
         for p in parents:
+            if p == LCA:
+                return result
             print ("Commit: " + sha)
-            result = self.getLog(p, result)
+            result = self.getLog(p, result, LCA)
+
+        if not LCA is None:
+            result = self.getLog(LCA, result)
 
         return result
 

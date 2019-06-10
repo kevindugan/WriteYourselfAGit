@@ -170,6 +170,9 @@ def test_base_commit(tmpdir):
     result = obj.getLowestCommonAncestor(commits=[sha1, sha2])
     assert result == base
 
+    result = obj.getLowestCommonAncestor(commits=[sha1])
+    assert result == sha1
+
 
 def test_log(tmpdir):
     repo = GitRepository.GitRepository(os.path.join(tmpdir, "myTest"))
@@ -190,9 +193,9 @@ def test_log(tmpdir):
     for result, expected in zip(shaList, reversed(historyData)):
         print("Result: "+result+"  Expected: "+expected[1])
 
-    # assert len(shaList) == len(historyData)
-    # for result, expected in zip(shaList,reversed(historyData)):
-    #     assert result == expected[1]
+    assert len(shaList) == len(historyData)
+    for result, expected in zip(shaList,reversed(historyData)):
+        assert result == expected[1]
     
 
 
