@@ -5,6 +5,7 @@ import re
 import collections
 from VersionControl import GitObjectFactory
 from datetime import datetime
+from termcolor import colored
 
 class GitObject(object):
 
@@ -220,7 +221,7 @@ class GitObject(object):
         message = ""
         for commit in sha_history:
             contents = self.read_object(commit)
-            message += "commit " + commit + "\n"
+            message += colored("commit " + commit + "\n", 'yellow')
             if "parent" in contents.commitData:
                 if type(contents.commitData["parent"]) == list:
                     message += "Merge:"
