@@ -10,3 +10,6 @@ class CommitObject(GitObject):
 
     def deserializeData(self, data):
         self.commitData = GitObject.parse_commit_object(data)
+
+    def data(self):
+        return self.commitData

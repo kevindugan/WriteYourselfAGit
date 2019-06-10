@@ -2,6 +2,7 @@ import argparse
 import sys, os
 from VersionControl import GitRepository
 from VersionControl import GitObjectFactory
+from VersionControl import GitHistory
 
 class wyag(object):
 
@@ -60,9 +61,9 @@ class wyag(object):
 
         elif cli_args["command"] == "log":
             repo = GitRepository.GitRepository.find_repo(os.getcwd())
-            obj = GitObjectFactory.GitObjectFactory.factory("commit", repo)
+            history = GitHistory.GitHistory(repo)
             sha = cli_args["hash"]
             if sha == "head":
                 sha = repo.getHeadCommit()
-            log = obj.getLog(sha)
-            obj.printLog(log, colored_output=cli_args["color_out"])
+            log = history.getLog(sha)
+            history.printLog(log, colored_output=cli_args["color_out"])

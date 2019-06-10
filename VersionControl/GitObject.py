@@ -4,8 +4,6 @@ import zlib
 import re
 import collections
 from VersionControl import GitObjectFactory
-from datetime import datetime
-from termcolor import colored
 
 class GitObject(object):
 
@@ -21,6 +19,9 @@ class GitObject(object):
         raise NotImplementedError()
 
     def deserializeData(self, path):
+        raise NotImplementedError()
+
+    def data(self):
         raise NotImplementedError()
 
     def create_object(self, actually_write=False):
@@ -151,131 +152,3 @@ class GitObject(object):
         # result += '\n'
 
         return result
-
-    def fillCommitQueue(self, sha, queue):
-        queue.add(sha)
-
-        contents = self.read_object(sha)
-        assert contents.getObjectType() == "commit"
-        if "parent" not in contents.commitData.keys():
-            return
-            
-        parent = ""
-        if type(contents.commitData["parent"]) == list:
-            parent = contents.commitData["parent"][0]
-        else:
-            parent = contents.commitData["parent"]
-
-        self.fillCommitQueue(parent, queue)
-
-    def getLowestCommonAncestor(self, commits):
-        assert len(commits) > 0
-
-        queue = CommitQueue()
-        self.fillCommitQueue(commits[0], queue)
-        assert queue.size() > 0
-
-        for other in commits[1:]:
-            otherQueue = CommitQueue()
-            self.fillCommitQueue(other, otherQueue)
-            while(not otherQueue.empty()):
-                if otherQueue.top() in queue:
-                    break
-                else:
-                    otherQueue.pop()
-
-            queue = otherQueue
-
-        return queue.top()
-
-    def getLog(self, sha, result=[], LCA=None):
-
-        if sha in result:
-            return result
-        result.append(sha)
-
-        contents = self.read_object(sha)
-        assert contents.getObjectType() == "commit"
-
-        if "parent" not in contents.commitData.keys():
-            return result
-
-        parents = contents.commitData["parent"]
-        if type(parents) != list:
-            parents = [ parents ]
-        
-        if len(parents) > 1:
-            LCA = self.getLowestCommonAncestor(parents)
-
-        for p in parents:
-            if p == LCA:
-                return result
-            result = self.getLog(p, result, LCA)
-
-        if not LCA is None:
-            result = self.getLog(LCA, result)
-
-        return result
-
-    def printLog(self, sha_history, colored_output=True):
-        message = ""
-        for commit in sha_history:
-            contents = self.read_object(commit)
-            if colored_output:
-                message += colored("commit " + commit + "\n", 'yellow')
-            else:
-                message += "commit " + commit + "\n"
-            if "parent" in contents.commitData:
-                if type(contents.commitData["parent"]) == list:
-                    message += "Merge:"
-                    for p in contents.commitData["parent"]:
-                        message += " " + p[:7]
-                    message += "\n"
-            header = contents.commitData["author"]
-            CA = re.split('([0-9]+ -[0-9]+)', header)
-            author = CA[0].strip()
-            date = int(CA[1].split()[0])
-            zone = CA[1].split()[1]
-            message += "Author: " + author + "\n"
-
-            date = datetime.fromtimestamp(date)
-            message += "Date:   " + date.strftime("%a %b %-d %H:%M:%S %Y") + " " + zone + "\n"
-            message += "\n"
-            message += "    " + contents.commitData["short_msg"] + "\n"
-            message += "\n"
-        
-        # Remove last new line
-        print(message.rstrip('\n'))
-
-
-
-class CommitQueue(object):
-
-    def __init__(self):
-        self.queue = []
-
-    def size(self):
-        return len(self.queue)
-
-    def empty(self):
-        return len(self.queue) == 0
-
-    def add(self, item):
-        self.queue.append(item)
-
-    def pop(self):
-        return self.queue.pop(0)
-
-    def top(self):
-        return self.queue[0]
-
-    def pop_until(self, item):
-        assert item in self.queue, "Item not in queue"
-        while (len(self.queue) > 0):
-            if self.top() == item:
-                return
-            else:
-                self.pop()
-
-    def __contains__(self, item):
-        return item in self.queue
