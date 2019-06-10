@@ -6,7 +6,6 @@ class GitRepository(object):
     def __init__(self, path):
         self.workTree = os.path.abspath(path)
         self.gitDir = os.path.join(self.workTree, ".git")
-        self.initialized = False
 
     def __eq__(self, other):
         return self.gitDir == other.gitDir
@@ -45,7 +44,7 @@ class GitRepository(object):
         return result
 
     def getHeadPath(self):
-        if not self.initialized:
+        if not os.path.isdir(self.gitDir):
             raise RuntimeError("Uninitialized repository")
 
         headPath = ""
@@ -55,7 +54,7 @@ class GitRepository(object):
         return headPath
 
     def setHeadCommit(self, sha):
-        if not self.initialized:
+        if not os.path.isdir(self.gitDir):
             raise RuntimeError("Uninitialized repository")
 
         headPath = self.getHeadPath()
@@ -64,7 +63,7 @@ class GitRepository(object):
             f.write(sha)
 
     def getHeadCommit(self):
-        if not self.initialized:
+        if not os.path.isdir(self.gitDir):
             raise RuntimeError("Uninitialized repository")
 
         headPath = self.getHeadPath()

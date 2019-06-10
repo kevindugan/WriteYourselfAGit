@@ -4,6 +4,7 @@ import zlib
 import re
 import collections
 from VersionControl import GitObjectFactory
+from datetime import datetime
 
 class GitObject(object):
 
@@ -208,7 +209,6 @@ class GitObject(object):
         for p in parents:
             if p == LCA:
                 return result
-            print ("Commit: " + sha)
             result = self.getLog(p, result, LCA)
 
         if not LCA is None:
@@ -216,6 +216,32 @@ class GitObject(object):
 
         return result
 
+    def printLog(self, sha_history):
+        message = ""
+        for commit in sha_history:
+            contents = self.read_object(commit)
+            message += "commit " + commit + "\n"
+            if "parent" in contents.commitData:
+                if type(contents.commitData["parent"]) == list:
+                    message += "Merge:"
+                    for p in contents.commitData["parent"]:
+                        message += " " + p[:7]
+                    message += "\n"
+            header = contents.commitData["author"]
+            CA = re.split('([0-9]+ -[0-9]+)', header)
+            author = CA[0].strip()
+            date = int(CA[1].split()[0])
+            zone = CA[1].split()[1]
+            message += "Author: " + author + "\n"
+
+            date = datetime.fromtimestamp(date)
+            message += "Date:   " + date.strftime("%a %b %-d %H:%M:%S %Y") + " " + zone + "\n"
+            message += "\n"
+            message += "    " + contents.commitData["short_msg"] + "\n"
+            message += "\n"
+        
+        # Remove last new line
+        print(message.rstrip('\n'))
 
 
 

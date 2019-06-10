@@ -25,6 +25,9 @@ class wyag(object):
         cat_file_parser.add_argument('hash', help='Hash of object')
         cat_file_parser.add_argument('-t', help="Type of Object", dest="object_type", choices=['blob', 'commit'], default='blob')
 
+        log_parser = subparsers.add_parser('log', help="Output Commit History")
+        log_parser.add_argument('hash', help='Hash where to start history', nargs='?', default='head')
+
         if arg_list is not None and len(arg_list) < 1:
             parser.print_help()
             sys.exit(1)
@@ -53,3 +56,12 @@ class wyag(object):
             repo = GitRepository.GitRepository.find_repo(os.getcwd())
             obj = GitObjectFactory.GitObjectFactory.factory(cli_args["object_type"], repo)
             print(obj.read_object(cli_args['hash']).serializeData(), end='')
+
+        elif cli_args["command"] == "log":
+            repo = GitRepository.GitRepository.find_repo(os.getcwd())
+            obj = GitObjectFactory.GitObjectFactory.factory("commit", repo)
+            sha = cli_args["hash"]
+            if sha == "head":
+                sha = repo.getHeadCommit()
+            log = obj.getLog(sha)
+            obj.printLog(log)

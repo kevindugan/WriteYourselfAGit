@@ -196,6 +196,8 @@ def test_log(tmpdir):
     assert len(shaList) == len(historyData)
     for result, expected in zip(shaList,reversed(historyData)):
         assert result == expected[1]
+
+    obj.printLog(shaList)
     
 
 
