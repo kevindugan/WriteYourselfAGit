@@ -95,3 +95,136 @@ def test_commit_objects(tmpdir, capsys):
     myGit.run(['cat-file', expected_hash])
     captured = capsys.readouterr()
     assert captured.out == contents
+
+def test_log_cmd(tmpdir, capsys):
+    
+    myGit = WyagLib.wyag()
+    myGit.run(['init', os.path.join(tmpdir, "myTest")])
+
+    commitHistory = git_commit_history_data()
+    for item in commitHistory:
+        with open(os.path.join(tmpdir, "myTest", "hashObject.txt"), "w") as f:
+            f.write(item[0])
+        myGit.run(['hash-object', '-w', '-t', 'commit', os.path.join(tmpdir, "myTest", "hashObject.txt")])
+        captured = capsys.readouterr()
+        assert captured.out.strip() == item[1]
+
+    # Change into generated repo
+    os.chdir(os.path.join(tmpdir, "myTest"))
+
+    # Create HEAD
+    with open(os.path.join(tmpdir, "myTest", ".git", "refs", "heads", "master"), "w") as f:
+        f.write(commitHistory[-1][1])
+
+    myGit.run(['log', '--no-color'])
+    captured = capsys.readouterr()
+    log_result = captured.out.strip()
+    assert log_result == get_log_output_plain()
+
+
+
+def git_commit_history_data():
+    history = []
+    history.append(["tree aff72e7367c3ae1928decc25272ec334a805e618\n" + \
+                   "author Kevin J. Dugan <dugankj@ornl.gov> 1560083980 -0400\n" + \
+                   "committer Kevin J. Dugan <dugankj@ornl.gov> 1560083980 -0400\n" + \
+                   "\n" + \
+                   "Initial Commit\n", "d228dfd0601080af1af564eb7a3bc6fbb7a2696f"])
+
+
+    history.append(["tree 18e156c8acb2081a9b300796b8672f27837e3961\n" + \
+                   "parent d228dfd0601080af1af564eb7a3bc6fbb7a2696f\n" + \
+                   "author Kevin J. Dugan <dugankj@ornl.gov> 1560084040 -0400\n" + \
+                   "committer Kevin J. Dugan <dugankj@ornl.gov> 1560084040 -0400\n" + \
+                   "\n" + \
+                   "Added new line\n", "30f3cf9a5f3b33b6090f469c6f8fd8ced8aad098"])
+
+
+    history.append(["tree 24cc7c0ead06780c12ae9ae79fc7fb69c0f054ee\n" + \
+                   "parent 30f3cf9a5f3b33b6090f469c6f8fd8ced8aad098\n" + \
+                   "author Kevin J. Dugan <dugankj@ornl.gov> 1560084096 -0400\n" + \
+                   "committer Kevin J. Dugan <dugankj@ornl.gov> 1560084096 -0400\n" + \
+                   "\n" + \
+                   "Added new file\n", "6ed18ac3b2d77272bf240f313901ef75076d6377"])
+
+                   
+    history.append(["tree c8cd9c7e731de0feb53cd0f0a60ebe39d30ebfd8\n" + \
+                   "parent 6ed18ac3b2d77272bf240f313901ef75076d6377\n" + \
+                   "author Kevin J. Dugan <dugankj@ornl.gov> 1560084124 -0400\n" + \
+                   "committer Kevin J. Dugan <dugankj@ornl.gov> 1560084124 -0400\n" + \
+                   "\n" + \
+                   "Added new line\n", "17c06afad13f728e4e31ae85a534a5cf73e2bd76"])
+
+
+    history.append(["tree 4fdedfd76570511fb0e43153b8cfe2aba896b009\n" + \
+                   "parent 30f3cf9a5f3b33b6090f469c6f8fd8ced8aad098\n" + \
+                   "author Kevin J. Dugan <dugankj@ornl.gov> 1560084362 -0400\n" + \
+                   "committer Kevin J. Dugan <dugankj@ornl.gov> 1560084362 -0400\n" + \
+                   "\n" + \
+                   "Added new lines\n", "bbfbe5740cb7180100e86504779d38173d2247cb"])
+
+
+    history.append(["tree 24cb97583ae8ef3e046c8e7f8d78aea8a0986e20\n" + \
+                   "parent bbfbe5740cb7180100e86504779d38173d2247cb\n" + \
+                   "parent 17c06afad13f728e4e31ae85a534a5cf73e2bd76\n" + \
+                   "author Kevin J. Dugan <dugankj@ornl.gov> 1560084417 -0400\n" + \
+                   "committer Kevin J. Dugan <dugankj@ornl.gov> 1560084417 -0400\n" + \
+                   "\n" + \
+                   "Merge branch 'new-file'\n", "af54843b4fa85db56ed9140b5a39ec2df744fc4b"])
+
+
+    history.append(["tree 0fef7a0dc4cd421c3645c21f878b76205f78c3b1\n" + \
+                   "parent af54843b4fa85db56ed9140b5a39ec2df744fc4b\n" + \
+                   "author Kevin J. Dugan <dugankj@ornl.gov> 1560084474 -0400\n" + \
+                   "committer Kevin J. Dugan <dugankj@ornl.gov> 1560084474 -0400\n" + \
+                   "\n" + \
+                   "added new lines\n", "075c7e021c0d2e4a43f01a2e848daf605ed4e65f"])
+
+
+    return history
+
+def get_log_output_plain():
+    message = ""
+    message += "commit 075c7e021c0d2e4a43f01a2e848daf605ed4e65f\n"
+    message += "Author: Kevin J. Dugan <dugankj@ornl.gov>\n"
+    message += "Date:   Sun Jun 9 08:47:54 2019 -0400\n"
+    message += "\n"
+    message += "    added new lines\n"
+    message += "\n"
+    message += "commit af54843b4fa85db56ed9140b5a39ec2df744fc4b\n"
+    message += "Merge: bbfbe57 17c06af\n"
+    message += "Author: Kevin J. Dugan <dugankj@ornl.gov>\n"
+    message += "Date:   Sun Jun 9 08:46:57 2019 -0400\n"
+    message += "\n"
+    message += "    Merge branch 'new-file'\n"
+    message += "\n"
+    message += "commit bbfbe5740cb7180100e86504779d38173d2247cb\n"
+    message += "Author: Kevin J. Dugan <dugankj@ornl.gov>\n"
+    message += "Date:   Sun Jun 9 08:46:02 2019 -0400\n"
+    message += "\n"
+    message += "    Added new lines\n"
+    message += "\n"
+    message += "commit 17c06afad13f728e4e31ae85a534a5cf73e2bd76\n"
+    message += "Author: Kevin J. Dugan <dugankj@ornl.gov>\n"
+    message += "Date:   Sun Jun 9 08:42:04 2019 -0400\n"
+    message += "\n"
+    message += "    Added new line\n"
+    message += "\n"
+    message += "commit 6ed18ac3b2d77272bf240f313901ef75076d6377\n"
+    message += "Author: Kevin J. Dugan <dugankj@ornl.gov>\n"
+    message += "Date:   Sun Jun 9 08:41:36 2019 -0400\n"
+    message += "\n"
+    message += "    Added new file\n"
+    message += "\n"
+    message += "commit 30f3cf9a5f3b33b6090f469c6f8fd8ced8aad098\n"
+    message += "Author: Kevin J. Dugan <dugankj@ornl.gov>\n"
+    message += "Date:   Sun Jun 9 08:40:40 2019 -0400\n"
+    message += "\n"
+    message += "    Added new line\n"
+    message += "\n"
+    message += "commit d228dfd0601080af1af564eb7a3bc6fbb7a2696f\n"
+    message += "Author: Kevin J. Dugan <dugankj@ornl.gov>\n"
+    message += "Date:   Sun Jun 9 08:39:40 2019 -0400\n"
+    message += "\n"
+    message += "    Initial Commit"
+    return message

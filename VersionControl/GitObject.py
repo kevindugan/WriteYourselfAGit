@@ -217,11 +217,14 @@ class GitObject(object):
 
         return result
 
-    def printLog(self, sha_history):
+    def printLog(self, sha_history, colored_output=True):
         message = ""
         for commit in sha_history:
             contents = self.read_object(commit)
-            message += colored("commit " + commit + "\n", 'yellow')
+            if colored_output:
+                message += colored("commit " + commit + "\n", 'yellow')
+            else:
+                message += "commit " + commit + "\n"
             if "parent" in contents.commitData:
                 if type(contents.commitData["parent"]) == list:
                     message += "Merge:"

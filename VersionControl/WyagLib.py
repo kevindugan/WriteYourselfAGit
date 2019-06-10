@@ -27,6 +27,7 @@ class wyag(object):
 
         log_parser = subparsers.add_parser('log', help="Output Commit History")
         log_parser.add_argument('hash', help='Hash where to start history', nargs='?', default='head')
+        log_parser.add_argument('--no-color', help='Suppress color output', dest='color_out', action='store_false')
 
         if arg_list is not None and len(arg_list) < 1:
             parser.print_help()
@@ -64,4 +65,4 @@ class wyag(object):
             if sha == "head":
                 sha = repo.getHeadCommit()
             log = obj.getLog(sha)
-            obj.printLog(log)
+            obj.printLog(log, colored_output=cli_args["color_out"])
