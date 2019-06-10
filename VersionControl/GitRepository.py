@@ -6,6 +6,7 @@ class GitRepository(object):
     def __init__(self, path):
         self.workTree = os.path.abspath(path)
         self.gitDir = os.path.join(self.workTree, ".git")
+        self.initialized = False
 
     def __eq__(self, other):
         return self.gitDir == other.gitDir
@@ -31,6 +32,8 @@ class GitRepository(object):
             config = self.getDefaultConfig()
             config.write(f)
 
+        self.initialized = True
+
     def getDefaultConfig(self):
         result = configparser.ConfigParser()
 
@@ -40,6 +43,42 @@ class GitRepository(object):
         result.set('core', 'bare', 'false')
 
         return result
+
+    def getHeadPath(self):
+        if not self.initialized:
+            raise RuntimeError("Uninitialized repository")
+
+        headPath = ""
+        with open(os.path.join(self.gitDir, "HEAD")) as f:
+            headPath = f.read().split()[1].strip()
+
+        return headPath
+
+    def setHeadCommit(self, sha):
+        if not self.initialized:
+            raise RuntimeError("Uninitialized repository")
+
+        headPath = self.getHeadPath()
+
+        with open(os.path.join(self.gitDir, headPath), "w") as f:
+            f.write(sha)
+
+    def getHeadCommit(self):
+        if not self.initialized:
+            raise RuntimeError("Uninitialized repository")
+
+        headPath = self.getHeadPath()
+
+        sha = ""
+        with open(os.path.join(self.gitDir, headPath)) as f:
+            sha = f.read().strip()
+
+        return sha
+
+    def getLowestCommonAncestor(self, commits, commit_stack=[]):
+        assert len(commits) > 0
+
+
 
     @staticmethod
     def find_repo(path):
@@ -56,3 +95,31 @@ class GitRepository(object):
             sys.exit(1)
 
         return GitRepository.find_repo(parent)
+
+class CommitQueue(object):
+
+    def __init__(self):
+        self.queue = []
+
+    def size(self):
+        return len(self.queue)
+
+    def add(self, item):
+        self.queue.append(item)
+
+    def pop(self):
+        return self.queue.pop(0)
+
+    def top(self):
+        return self.queue[0]
+
+    def pop_until(self, item):
+        assert item in self.queue, "Item not in queue"
+        while (len(self.queue) > 0):
+            if self.top() == item:
+                return
+            else:
+                self.pop()
+
+    def __contains__(self, item):
+        return item in self.queue
