@@ -1,8 +1,10 @@
 import argparse
-import sys
+import sys, os
 from VersionControl import GitRepository
+from VersionControl import GitObjectFactory
+from VersionControl import GitHistory
 
-class wyag():
+class wyag(object):
 
     def __init__(self):
         pass
@@ -14,6 +16,19 @@ class wyag():
 
         init_parser = subparsers.add_parser('init', help='Initialize Repo')
         init_parser.add_argument('path', help='Where to initialize repo')
+
+        hash_obj_parser = subparsers.add_parser('hash-object', help='Hash file into object type')
+        hash_obj_parser.add_argument('path', help='Path to file')
+        hash_obj_parser.add_argument('-w', help='Actually write object file', dest='write_obj', action='store_true')
+        hash_obj_parser.add_argument('-t', help='Type of Object', dest='object_type', choices=['blob', 'commit'], default='blob')
+
+        cat_file_parser = subparsers.add_parser('cat-file', help='Output contents of object')
+        cat_file_parser.add_argument('hash', help='Hash of object')
+        cat_file_parser.add_argument('-t', help="Type of Object", dest="object_type", choices=['blob', 'commit'], default='blob')
+
+        log_parser = subparsers.add_parser('log', help="Output Commit History")
+        log_parser.add_argument('hash', help='Hash where to start history', nargs='?', default='head')
+        log_parser.add_argument('--no-color', help='Suppress color output', dest='color_out', action='store_false')
 
         if arg_list is not None and len(arg_list) < 1:
             parser.print_help()
@@ -30,3 +45,25 @@ class wyag():
         if cli_args["command"] == "init":
             repo = GitRepository.GitRepository(cli_args['path'])
             repo.initializeGitDir()
+
+        elif cli_args["command"] == "hash-object":
+            repo = GitRepository.GitRepository.find_repo(cli_args['path'])
+            fileContents = ""
+            with open(cli_args['path']) as f:
+                fileContents = f.read()
+            obj = GitObjectFactory.GitObjectFactory.factory(cli_args["object_type"], repo, fileContents)
+            print(obj.create_object(cli_args['write_obj']))
+
+        elif cli_args["command"] == "cat-file":
+            repo = GitRepository.GitRepository.find_repo(os.getcwd())
+            obj = GitObjectFactory.GitObjectFactory.factory(cli_args["object_type"], repo)
+            print(obj.read_object(cli_args['hash']).serializeData(), end='')
+
+        elif cli_args["command"] == "log":
+            repo = GitRepository.GitRepository.find_repo(os.getcwd())
+            history = GitHistory.GitHistory(repo)
+            sha = cli_args["hash"]
+            if sha == "head":
+                sha = repo.getHeadCommit()
+            log = history.getLog(sha)
+            history.printLog(log, colored_output=cli_args["color_out"])

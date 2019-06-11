@@ -1,6 +1,6 @@
 import pytest
 import os
-from VersionControl import GitRepository
+from VersionControl import GitRepository, GitObjectFactory
 
 def test_init_repo(tmpdir):
     repo = GitRepository.GitRepository(os.path.join(tmpdir, "myTest"))
@@ -90,3 +90,30 @@ def test_find_repo(tmpdir):
     assert os.getcwd() == os.path.join(tmpdir, "myTest", "dir1", "dir11", "dir13")
     result = GitRepository.GitRepository.find_repo(os.getcwd())
     assert result == repo
+
+def test_set_head(tmpdir):
+    repo = GitRepository.GitRepository(os.path.join(tmpdir, "myTest"))
+
+    with pytest.raises(RuntimeError):
+        repo.setHeadCommit("blah")
+
+    repo.initializeGitDir()
+
+    commitData = ["tree aff72e7367c3ae1928decc25272ec334a805e618\n" + \
+                  "author Kevin J. Dugan <dugankj@ornl.gov> 1560083980 -0400\n" + \
+                  "committer Kevin J. Dugan <dugankj@ornl.gov> 1560083980 -0400\n" + \
+                  "\n" + \
+                  "Initial Commit\n", "d228dfd0601080af1af564eb7a3bc6fbb7a2696f"]
+
+    obj = GitObjectFactory.GitObjectFactory.factory("commit", repo, commitData[0])
+    sha = obj.create_object(True)
+    assert sha == commitData[1]
+
+    headPath = os.path.join(tmpdir, "myTest", ".git", "refs", "heads", "master")
+    assert not os.path.isfile(headPath)
+    repo.setHeadCommit(sha)
+    assert os.path.isfile(headPath)
+    with open(headPath) as f:
+        assert sha == f.read().strip()
+
+    assert repo.getHeadCommit() == sha

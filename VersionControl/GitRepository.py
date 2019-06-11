@@ -1,7 +1,7 @@
 import os, sys
 import configparser
 
-class GitRepository():
+class GitRepository(object):
 
     def __init__(self, path):
         self.workTree = os.path.abspath(path)
@@ -31,6 +31,8 @@ class GitRepository():
             config = self.getDefaultConfig()
             config.write(f)
 
+        self.initialized = True
+
     def getDefaultConfig(self):
         result = configparser.ConfigParser()
 
@@ -40,6 +42,37 @@ class GitRepository():
         result.set('core', 'bare', 'false')
 
         return result
+
+    def getHeadPath(self):
+        if not os.path.isdir(self.gitDir):
+            raise RuntimeError("Uninitialized repository")
+
+        headPath = ""
+        with open(os.path.join(self.gitDir, "HEAD")) as f:
+            headPath = f.read().split()[1].strip()
+
+        return headPath
+
+    def setHeadCommit(self, sha):
+        if not os.path.isdir(self.gitDir):
+            raise RuntimeError("Uninitialized repository")
+
+        headPath = self.getHeadPath()
+
+        with open(os.path.join(self.gitDir, headPath), "w") as f:
+            f.write(sha)
+
+    def getHeadCommit(self):
+        if not os.path.isdir(self.gitDir):
+            raise RuntimeError("Uninitialized repository")
+
+        headPath = self.getHeadPath()
+
+        sha = ""
+        with open(os.path.join(self.gitDir, headPath)) as f:
+            sha = f.read().strip()
+
+        return sha
 
     @staticmethod
     def find_repo(path):
