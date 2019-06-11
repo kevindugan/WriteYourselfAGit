@@ -1,7 +1,16 @@
 from VersionControl import GitObjectFactory
 from datetime import datetime
-from termcolor import colored
+import importlib
+if importlib.util.find_spec("termcolor") is not None:
+    from termcolor import colored
 import re
+
+
+def color_out(message, color):
+    if importlib.util.find_spec("termcolor") is None:
+        return message
+    else:
+        return colored(message, color)
 
 class GitHistory(object):
 
@@ -82,7 +91,7 @@ class GitHistory(object):
             obj = GitObjectFactory.GitObjectFactory.factory("commit", self.repository)
             contents = obj.read_object(commit).data()
             if colored_output:
-                message += colored("commit " + commit + "\n", 'yellow')
+                message += color_out("commit " + commit + "\n", 'yellow')
             else:
                 message += "commit " + commit + "\n"
             if "parent" in contents.keys():
