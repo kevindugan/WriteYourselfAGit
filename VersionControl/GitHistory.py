@@ -107,7 +107,7 @@ class GitHistory(object):
             zone = CA[1].split()[1]
             message += "Author: " + author + "\n"
 
-            date = datetime.fromtimestamp(date)
+            date = datetime.utcfromtimestamp(date)
             message += "Date:   " + date.strftime("%a %b %-d %H:%M:%S %Y") + " " + zone + "\n"
             message += "\n"
             message += "    " + contents["short_msg"] + "\n"
